@@ -19,6 +19,35 @@ The accelerometer measures acceleration in all three spatial dimensions as follo
 - Y-axis captures the upward and downward movement of the leg
 - X-axis captures the horizontal movement of the leg
 
+The plots below show characteristics for each activity. Because of the periodicity of such activities, a few seconds windows is sufficient.
+
+
+  <div>
+		<a href="/img/accelerometer_walking.jpg" ><img src="/img/accelerometer_walking.jpg"  alt="Walking activity"></a>
+  	</div>
+	<div>
+		<a href="/img/accelerometer_jogging.jpg"><img src="/img/accelerometer_jogging.jpg"  alt="Jogging activity"></a>
+	</div>
+	<div>
+		<a href="/img/accelerometer_upstairs.jpg"><img src="/img/accelerometer_upstairs.jpg"  alt="Upstairs activity"></a>
+	</div>
+	<div>
+		<a href="/img/accelerometer_downstairs.jpg"><img src="/img/accelerometer_downstairs.jpg"  alt="Downstairs activity"></a>
+	</div>
+	<div>
+		<a href="/img/accelerometer_standing.jpg"><img src="/img/accelerometer_standing.jpg"  alt="Standing activity"></a>
+	</div>
+	<div>
+		<a href="/img/accelerometer_sitting.jpg"><img src="/img/accelerometer_sitting.jpg"  alt="Sitting activity"></a>
+	</div>
+
+The understanding of these graphics are essential to notice patterns for each activity and then recognize it.
+For example we observe repeating waves and peaks for the following repetitive activities walking, jogging, ascending stairs and descending stairs.
+We also observe no periodic behavior for more static activities like standing or sitting, but different amplitudes.
+
+The data sets provide data from 37 different users. And each user perform different activities several time. 
+So I have defined several windows for each user and each activity to retrieve more samples.
+
 ## Determine and compute features for the model
 Each of these activities demonstrate characteristics that we will use to define the features of the model. 
 For example, the plot for walking shows a series of high peaks for the y-axis spaced out approximately 0.5 seconds 
