@@ -1,5 +1,7 @@
 package com.actitracker.data;
 
 
-public class CassandraConnect {
+public class ExtractFeature {
+
+  
 }
