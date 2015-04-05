@@ -1,0 +1,16 @@
+apply plugin: 'java'
+apply plugin: 'idea'
+
+sourceCompatibility = 1.8
+
+version = '1.0'
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+}
+
+dependencies {
+    compile group: 'org.apache.spark', name: 'spark-core_2.10', version:'1.3.0'
+    compile group: 'org.apache.spark', name: 'spark-mllib_2.10', version:'1.3.0'
+}
