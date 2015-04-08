@@ -27,31 +27,31 @@ import org.apache.spark.rdd.RDD;
  */
 public class ExtractFeature {
 
-  private static MultivariateStatisticalSummary summary;
+  private MultivariateStatisticalSummary summary;
 
   public ExtractFeature(JavaRDD<Vector> data) {
-    summary = Statistics.colStats(data.rdd());
+    this.summary = Statistics.colStats(data.rdd());
   }
 
-  public static Vector computeAvgAcc(JavaRDD<Vector> data) {
-    return summary.mean();
+  public Vector computeAvgAcc() {
+    return this.summary.mean();
   }
 
-  public static Vector computeVariance(JavaRDD data) {
-    return summary.variance();
+  public Vector computeVariance() {
+    return this.summary.variance();
   }
 
-  public static Double computeAvgAbsDifference(JavaRDD data) {
+  public Double computeAvgAbsDifference() {
     // TODO LPR
     return 0.0;
   }
 
-  public static Double computeResultantAcc(JavaRDD data) {
+  public Double computeResultantAcc() {
     // TODO LPR
     return 0.0;
   }
 
-  public static Double computeAvgTimeBetweenPeak(JavaRDD data) {
+  public Double computeAvgTimeBetweenPeak() {
     // TODO LPR
     return 0.0;
   }

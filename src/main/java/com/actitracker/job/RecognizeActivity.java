@@ -40,15 +40,21 @@ public class RecognizeActivity {
     // transform array into vector
     JavaRDD<Vector> vectors = DataManager.toVector(user);
 
-    // extract feature
+    /////////////////////
+    // extract feature //
+    /////////////////////
 
-    // the average accelaration
-    Vector mean = ExtractFeature.computeAvgAcc(vectors);
+    // the average acceleration (x,y,z)
+    ExtractFeature extractFeature = new ExtractFeature(vectors);
+
+    Vector mean = extractFeature.computeAvgAcc();
 
     System.out.println("average acc_x: " + mean.toArray()[0]);
     System.out.println("average acc_y: " + mean.toArray()[1]);
     System.out.println("average acc_z: " + mean.toArray()[2]);
 
+    // the variance (x,y,z)
+    Vector variance = extractFeature.computeVariance();
 
 
   }
