@@ -27,6 +27,7 @@ public class RecognizeActivity {
     CassandraJavaRDD<CassandraRow> cassandraRowsRDD = javaFunctions(sc).cassandraTable("actitracker", "users");
 
     // create bucket of sorted data
+    // TODO do it for each user
     int user_id = 8;
     String activity = "Jogging";
     long startTimeStamp = 110821191627000L;
