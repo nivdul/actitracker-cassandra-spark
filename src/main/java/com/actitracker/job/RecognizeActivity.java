@@ -23,7 +23,7 @@ public class RecognizeActivity {
 
     JavaSparkContext sc = new JavaSparkContext(sparkConf);
 
-    // retrieve data from Cassandra and creat an CassandraRDD
+    // retrieve data from Cassandra and create an CassandraRDD
     CassandraJavaRDD<CassandraRow> cassandraRowsRDD = javaFunctions(sc).cassandraTable("actitracker", "users");
 
     // create bucket of sorted data
@@ -41,21 +41,22 @@ public class RecognizeActivity {
     JavaRDD<Vector> vectors = DataManager.toVector(user);
 
     /////////////////////
-    // extract feature //
+    // extract features //
     /////////////////////
 
-    // the average acceleration (x,y,z)
+    // the average acceleration
     ExtractFeature extractFeature = new ExtractFeature(vectors);
 
     Vector mean = extractFeature.computeAvgAcc();
+    System.out.println("Average (acc_x, acc_y, acc_z): " + mean.toArray()[0] + "," + mean.toArray()[1] + "," + mean.toArray()[2]);
 
-    System.out.println("average acc_x: " + mean.toArray()[0]);
-    System.out.println("average acc_y: " + mean.toArray()[1]);
-    System.out.println("average acc_z: " + mean.toArray()[2]);
-
-    // the variance (x,y,z)
+    // the variance
     Vector variance = extractFeature.computeVariance();
+    System.out.println("Variance (var_x, var_y, var_z): " + variance.toArray()[0] + "," + variance.toArray()[1] + "," + variance.toArray()[2]);
 
+    // the Average absolute difference
+    Vector avgAbsDiff = ExtractFeature.computeAvgAbsDifference(vectors, mean);
+    System.out.println("Average absolute difference (avg_abs_diff_x, avg_abs_diff_y, avg_abs_diff_z): " + avgAbsDiff.toArray()[0] + "," + avgAbsDiff.toArray()[1] + "," + avgAbsDiff.toArray()[2]);
 
   }
 }

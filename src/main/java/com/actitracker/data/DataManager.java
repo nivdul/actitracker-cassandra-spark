@@ -12,10 +12,10 @@ public class DataManager {
   public static JavaRDD<Vector> toVector(CassandraJavaRDD<CassandraRow> data) {
 
     // first transform CassandraRDD into a RDD<Map>
-    // then build  a double array from the RDD<Map>
-    // to finish apply the dense method
     return data.map(cassandraRow -> cassandraRow.toMap())
-               .map(entry -> new double[]{(double) entry.get("acc_x"), (double) entry.get("acc_y"), (double) entry.get("acc_z")})
+                // then build  a double array from the RDD<Map>
+                .map(entry -> new double[]{(double) entry.get("acc_x"), (double) entry.get("acc_y"), (double) entry.get("acc_z")})
+               // to finish apply the dense method
                .map(line -> Vectors.dense(line));
 
   }
