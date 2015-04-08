@@ -3,8 +3,10 @@ package com.actitracker.data;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.mllib.linalg.Vector;
+import org.apache.spark.mllib.rdd.SlidingRDD;
 import org.apache.spark.mllib.stat.MultivariateStatisticalSummary;
 import org.apache.spark.mllib.stat.Statistics;
+import org.apache.spark.rdd.RDD;
 
 /**
  * We use labeled accelerometer data from users thanks to a device in their pocket during different activities (walking, sitting, jogging, ascending stairs, descending stairs, and standing).
@@ -25,32 +27,32 @@ import org.apache.spark.mllib.stat.Statistics;
  */
 public class ExtractFeature {
 
-  private MultivariateStatisticalSummary summary;
+  private static MultivariateStatisticalSummary summary;
 
   public ExtractFeature(JavaRDD<Vector> data) {
-    this.summary = Statistics.colStats(data.rdd());
+    summary = Statistics.colStats(data.rdd());
   }
 
-  public Vector computeAvgAcc(JavaRDD<Vector> data) {
-    return this.summary.mean();
+  public static Vector computeAvgAcc(JavaRDD<Vector> data) {
+    return summary.mean();
   }
 
-  public Vector computeVariance(JavaRDD data) {
-    return this.summary.variance();
+  public static Vector computeVariance(JavaRDD data) {
+    return summary.variance();
   }
 
-  public Double computeAvgAbsDifference(JavaRDD data) {
-
+  public static Double computeAvgAbsDifference(JavaRDD data) {
+    // TODO LPR
     return 0.0;
   }
 
-  public Double computeResultantAcc(JavaRDD data) {
-
+  public static Double computeResultantAcc(JavaRDD data) {
+    // TODO LPR
     return 0.0;
   }
 
-  public Double computeAvgTimeBetweenPeak(JavaRDD data) {
-
+  public static Double computeAvgTimeBetweenPeak(JavaRDD data) {
+    // TODO LPR
     return 0.0;
   }
 
