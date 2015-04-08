@@ -59,9 +59,9 @@ public class ExtractFeature {
     return 0.0;
   }
 
-  public Double computeAvgTimeBetweenPeak() {
+  public Vector computeAvgTimeBetweenPeak() {
     // TODO LPR
-    return 0.0;
+    return null;
   }
 
 

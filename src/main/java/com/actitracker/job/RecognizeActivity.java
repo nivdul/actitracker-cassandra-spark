@@ -54,9 +54,15 @@ public class RecognizeActivity {
     Vector variance = extractFeature.computeVariance();
     System.out.println("Variance (var_x, var_y, var_z): " + variance.toArray()[0] + "," + variance.toArray()[1] + "," + variance.toArray()[2]);
 
-    // the Average absolute difference
+    // the average absolute difference
     Vector avgAbsDiff = ExtractFeature.computeAvgAbsDifference(vectors, mean);
     System.out.println("Average absolute difference (avg_abs_diff_x, avg_abs_diff_y, avg_abs_diff_z): " + avgAbsDiff.toArray()[0] + "," + avgAbsDiff.toArray()[1] + "," + avgAbsDiff.toArray()[2]);
+
+    // the average resultant acceleration: 1/n * ∑√(x² + y² + z²)
+    Double resultant = extractFeature.computeResultantAcc();
+
+    // the average time between peaks (max)
+    Vector avgTimePeak = extractFeature.computeAvgTimeBetweenPeak();
 
   }
 }
