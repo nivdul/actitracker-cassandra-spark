@@ -10,6 +10,7 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.mllib.linalg.Vector;
 
+import static com.actitracker.data.ExtractFeature.*;
 import static com.datastax.spark.connector.japi.CassandraJavaUtil.*;
 
 public class RecognizeActivity {
@@ -40,6 +41,8 @@ public class RecognizeActivity {
     // transform array into vector
     JavaRDD<Vector> vectors = DataManager.toVector(user);
 
+    JavaRDD<Double[]> doubles = DataManager.toDouble(user);
+
     /////////////////////
     // extract features //
     /////////////////////
@@ -55,12 +58,13 @@ public class RecognizeActivity {
     System.out.println("Variance (var_x, var_y, var_z): " + variance.toArray()[0] + "," + variance.toArray()[1] + "," + variance.toArray()[2]);
 
     // the average absolute difference
-    Vector avgAbsDiff = ExtractFeature.computeAvgAbsDifference(vectors, mean);
+    Vector avgAbsDiff = computeAvgAbsDifference(doubles, mean);
     System.out.println("Average absolute difference (avg_abs_diff_x, avg_abs_diff_y, avg_abs_diff_z): " + avgAbsDiff.toArray()[0] + "," + avgAbsDiff.toArray()[1] + "," + avgAbsDiff.toArray()[2]);
 
     // the average resultant acceleration: 1/n * ∑√(x² + y² + z²)
-    Double resultant = extractFeature.computeResultantAcc();
-
+    Double resultant = computeResultantAcc(doubles);
+    System.out.println("Average resultant acceleration: " + resultant);
+//Average resultant acceleration: 11.959604546212395
     // the average time between peaks (max)
     Vector avgTimePeak = extractFeature.computeAvgTimeBetweenPeak();
 

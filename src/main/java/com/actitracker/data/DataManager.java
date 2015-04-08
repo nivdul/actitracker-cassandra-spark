@@ -19,4 +19,14 @@ public class DataManager {
                .map(line -> Vectors.dense(line));
 
   }
+
+  public static JavaRDD<Double[]> toDouble(CassandraJavaRDD<CassandraRow> data) {
+
+    // first transform CassandraRDD into a RDD<Map>
+    return data.map(cassandraRow -> cassandraRow.toMap())
+        // then build  a double array from the RDD<Map>
+        .map(entry -> new Double[]{(Double) entry.get("acc_x"), (Double) entry.get("acc_y"), (Double) entry.get("acc_z")});
+
+  }
+
 }
