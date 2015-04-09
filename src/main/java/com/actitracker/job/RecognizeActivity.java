@@ -33,15 +33,18 @@ public class RecognizeActivity {
     String activity = "Jogging";
     long startTimeStamp = 110821191627000L;
 
-    CassandraJavaRDD<CassandraRow> user = cassandraRowsRDD.select("acc_x", "acc_y", "acc_z")
+    CassandraJavaRDD<CassandraRow> user = cassandraRowsRDD.select("timestamp", "acc_x", "acc_y", "acc_z")
                                                           .where("user_id=? AND activity=? AND timestamp >=?", user_id, activity, startTimeStamp)
                                                           .withAscOrder()
                                                           .limit(100L);
 
-    // transform array into vector
+    // transform into vector without timestamp
     JavaRDD<Vector> vectors = DataManager.toVector(user);
-
+    // transform into array
     JavaRDD<Double[]> doubles = DataManager.toDouble(user);
+
+    // data with only timestamp and acc
+    JavaRDD<Long[]> timestamp = DataManager.withTimestamp(user);
 
     /////////////////////
     // extract features //
@@ -64,9 +67,10 @@ public class RecognizeActivity {
     // the average resultant acceleration: 1/n * ∑√(x² + y² + z²)
     Double resultant = computeResultantAcc(doubles);
     System.out.println("Average resultant acceleration: " + resultant);
-//Average resultant acceleration: 11.959604546212395
+
     // the average time between peaks (max)
-    Vector avgTimePeak = extractFeature.computeAvgTimeBetweenPeak();
+    Vector avgTimePeak = extractFeature.computeAvgTimeBetweenPeak(timestamp);
+    System.out.println("Average time between peaks: " + ((Double) avgTimePeak.toArray()[0]).longValue());
 
   }
 }

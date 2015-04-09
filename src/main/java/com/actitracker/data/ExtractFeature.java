@@ -1,7 +1,10 @@
 package com.actitracker.data;
 
 
+import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.function.Function;
+import org.apache.spark.api.java.function.VoidFunction;
 import org.apache.spark.mllib.linalg.Vector;
 import org.apache.spark.mllib.linalg.Vectors;
 import org.apache.spark.mllib.stat.MultivariateStatisticalSummary;
@@ -82,10 +85,30 @@ public class ExtractFeature {
 
   }
 
-  public Vector computeAvgTimeBetweenPeak() {
-    // TODO LPR
-    return null;
-  }
+  public Vector computeAvgTimeBetweenPeak(JavaRDD<Long[]> data) {
+    // define the maximum
+    double[] max = this.summary.max().toArray();
 
+    // keep the timestamp of data point for which the value is greather than 0.9 * max
+    // and sort it !
+    JavaRDD<Long> filtered_y = data.filter(record -> record[1] > 0.9 * max[0])
+                                   .map(record -> record[0])
+                                   .sortBy(time -> time, true, 1);
+
+    Long firstElement = filtered_y.first();
+    Long lastElement = filtered_y.sortBy(time -> time, false, 1).first();
+
+    // compute the delta between each tick
+    JavaRDD<Long> firstRDD = filtered_y.filter(record -> record > firstElement);
+    JavaRDD<Long> secondRDD = filtered_y.filter(record -> record < lastElement);
+
+    JavaRDD<Vector> product = firstRDD.cartesian(secondRDD)
+                                    .map(pair -> pair._1() - pair._2())
+                                    // and keep it if the delta is != 0
+                                    .filter(value -> value > 0)
+                                    .map(line -> Vectors.dense(line));
+    // compute the mean of the delta
+    return Statistics.colStats(product.rdd()).mean();
+  }
 
 }

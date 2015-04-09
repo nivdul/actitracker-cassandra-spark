@@ -29,4 +29,12 @@ public class DataManager {
 
   }
 
+  public static JavaRDD<Long[]> withTimestamp(CassandraJavaRDD<CassandraRow> data) {
+    // first transform CassandraRDD into a RDD<Map>
+    return data.map(cassandraRow -> cassandraRow.toMap())
+        // then build  a double array from the RDD<Map>
+        .map(entry -> new Long[]{(Long) entry.get("timestamp"), ((Double) entry.get("acc_y")).longValue()});
+
+  }
+
 }
