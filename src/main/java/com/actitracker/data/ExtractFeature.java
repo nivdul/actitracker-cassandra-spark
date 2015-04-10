@@ -1,10 +1,7 @@
 package com.actitracker.data;
 
 
-import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.function.Function;
-import org.apache.spark.api.java.function.VoidFunction;
 import org.apache.spark.mllib.linalg.Vector;
 import org.apache.spark.mllib.linalg.Vectors;
 import org.apache.spark.mllib.stat.MultivariateStatisticalSummary;
@@ -40,38 +37,38 @@ public class ExtractFeature {
   /**
    * @return Vector (mean_acc_x, mean_acc_y, mean_acc_z)
    */
-  public Vector computeAvgAcc() {
-    return this.summary.mean();
+  public double[] computeAvgAcc() {
+    return this.summary.mean().toArray();
   }
 
   /**
    * @return Vector (var_acc_x, var_acc_y, var_acc_z)
    */
-  public Vector computeVariance() {
-    return this.summary.variance();
+  public double[] computeVariance() {
+    return this.summary.variance().toArray();
   }
 
   /**
    * @return Vector [ (1 / n ) * ∑ |b - mean_b|, for b in {x,y,z} ]
    */
-  public static Vector computeAvgAbsDifference(JavaRDD<Double[]> data, Vector mean) {
+  public static double[] computeAvgAbsDifference(JavaRDD<Double[]> data, double[] mean) {
 
     // then for each point x compute x - mean
     // then apply an absolute value: |x - mean|
-    JavaRDD<Vector> abs = data.map(record -> new double[]{Math.abs(record[0] - mean.toArray()[0]),
-        Math.abs(record[1] - mean.toArray()[1]),
-        Math.abs(record[2] - mean.toArray()[2])})
+    JavaRDD<Vector> abs = data.map(record -> new double[]{Math.abs(record[0] - mean[0]),
+        Math.abs(record[1] - mean[1]),
+        Math.abs(record[2] - mean[2])})
                               .map(line -> Vectors.dense(line));
 
     // And to finish apply the mean: for each axis (1 / n ) * ∑ |b - mean|
-    return Statistics.colStats(abs.rdd()).mean();
+    return Statistics.colStats(abs.rdd()).mean().toArray();
 
   }
 
   /**
    * @return Double resultant = 1/n * ∑ √(x² + y² + z²)
    */
-  public static Double computeResultantAcc(JavaRDD<Double[]> data) {
+  public static double computeResultantAcc(JavaRDD<Double[]> data) {
     // first let's compute the square of each value and the sum
     // compute then the root square: √(x² + y² + z²)
     // to finish apply a mean function: 1/n * sum [√(x² + y² + z²)]
@@ -85,7 +82,7 @@ public class ExtractFeature {
 
   }
 
-  public Vector computeAvgTimeBetweenPeak(JavaRDD<Long[]> data) {
+  public Double computeAvgTimeBetweenPeak(JavaRDD<Long[]> data) {
     // define the maximum
     double[] max = this.summary.max().toArray();
 
@@ -108,7 +105,7 @@ public class ExtractFeature {
                                     .filter(value -> value > 0)
                                     .map(line -> Vectors.dense(line));
     // compute the mean of the delta
-    return Statistics.colStats(product.rdd()).mean();
+    return Statistics.colStats(product.rdd()).mean().toArray()[0];
   }
 
 }

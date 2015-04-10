@@ -17,7 +17,6 @@ public class DataManager {
                 .map(entry -> new double[]{(double) entry.get("acc_x"), (double) entry.get("acc_y"), (double) entry.get("acc_z")})
                // to finish apply the dense method
                .map(line -> Vectors.dense(line));
-
   }
 
   public static JavaRDD<Double[]> toDouble(CassandraJavaRDD<CassandraRow> data) {
@@ -26,7 +25,6 @@ public class DataManager {
     return data.map(cassandraRow -> cassandraRow.toMap())
         // then build  a double array from the RDD<Map>
         .map(entry -> new Double[]{(Double) entry.get("acc_x"), (Double) entry.get("acc_y"), (Double) entry.get("acc_z")});
-
   }
 
   public static JavaRDD<Long[]> withTimestamp(CassandraJavaRDD<CassandraRow> data) {
@@ -34,7 +32,6 @@ public class DataManager {
     return data.map(cassandraRow -> cassandraRow.toMap())
         // then build  a double array from the RDD<Map>
         .map(entry -> new Long[]{(Long) entry.get("timestamp"), ((Double) entry.get("acc_y")).longValue()});
-
   }
 
 }
