@@ -51,14 +51,14 @@ public class ExtractFeature {
   /**
    * @return Vector [ (1 / n ) * ∑ |b - mean_b|, for b in {x,y,z} ]
    */
-  public static double[] computeAvgAbsDifference(JavaRDD<Double[]> data, double[] mean) {
+  public static double[] computeAvgAbsDifference(JavaRDD<double[]> data, double[] mean) {
 
     // then for each point x compute x - mean
     // then apply an absolute value: |x - mean|
     JavaRDD<Vector> abs = data.map(record -> new double[]{Math.abs(record[0] - mean[0]),
         Math.abs(record[1] - mean[1]),
         Math.abs(record[2] - mean[2])})
-                              .map(line -> Vectors.dense(line));
+                              .map(Vectors::dense);
 
     // And to finish apply the mean: for each axis (1 / n ) * ∑ |b - mean|
     return Statistics.colStats(abs.rdd()).mean().toArray();
@@ -68,30 +68,31 @@ public class ExtractFeature {
   /**
    * @return Double resultant = 1/n * ∑ √(x² + y² + z²)
    */
-  public static double computeResultantAcc(JavaRDD<Double[]> data) {
+  public static double computeResultantAcc(JavaRDD<double[]> data) {
     // first let's compute the square of each value and the sum
     // compute then the root square: √(x² + y² + z²)
     // to finish apply a mean function: 1/n * sum [√(x² + y² + z²)]
     JavaRDD<Vector> squared = data.map(record -> Math.pow(record[0], 2)
                                                + Math.pow(record[1], 2)
                                                + Math.pow(record[2], 2))
-                                  .map(sum -> Math.sqrt(sum))
+                                  .map(Math::sqrt)
                                   .map(sum -> Vectors.dense(new double[]{sum}));
 
     return Statistics.colStats(squared.rdd()).mean().toArray()[0];
 
   }
 
-  public Double computeAvgTimeBetweenPeak(JavaRDD<Long[]> data) {
+  // TODO fix it @link:https://github.com/nivdul/actitracker-cassandra-spark/issues/7
+  public Double computeAvgTimeBetweenPeak(JavaRDD<long[]> data) {
     // define the maximum
     double[] max = this.summary.max().toArray();
 
     // keep the timestamp of data point for which the value is greather than 0.9 * max
     // and sort it !
-    JavaRDD<Long> filtered_y = data.filter(record -> record[1] > 0.9 * max[0])
+    JavaRDD<Long> filtered_y = data.filter(record -> record[1] > 0.9 * max[1])
                                    .map(record -> record[0])
                                    .sortBy(time -> time, true, 1);
-
+    System.out.println(filtered_y.count());
     if (filtered_y.count() > 1) {
       Long firstElement = filtered_y.first();
       Long lastElement = filtered_y.sortBy(time -> time, false, 1).first();
@@ -105,6 +106,9 @@ public class ExtractFeature {
               // and keep it if the delta is != 0
           .filter(value -> value > 0)
           .map(line -> Vectors.dense(line));
+
+      System.out.println("product " + product.count());
+      System.out.println("product " + product.take(8));
       // compute the mean of the delta
       return Statistics.colStats(product.rdd()).mean().toArray()[0];
     }

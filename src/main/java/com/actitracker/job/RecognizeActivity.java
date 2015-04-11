@@ -55,9 +55,9 @@ public class RecognizeActivity {
           // transform into vector without timestamp
           JavaRDD<Vector> vectors = DataManager.toVector(user);
           // transform into array
-          JavaRDD<Double[]> doubles = DataManager.toDouble(user);
+          JavaRDD<double[]> doubles = DataManager.toDouble(user);
           // data with only timestamp and acc
-          JavaRDD<Long[]> timestamp = DataManager.withTimestamp(user);
+          JavaRDD<long[]> timestamp = DataManager.withTimestamp(user);
 
           // extract features from this bucket
 
