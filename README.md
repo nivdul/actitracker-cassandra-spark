@@ -23,23 +23,9 @@ The plots below show characteristics for each activity. Because of the periodici
 
 
   <div>
-		<a href="/img/accelerometer_walking.jpg" ><img src="/img/accelerometer_walking.jpg"  alt="Walking activity"></a>
+		<a href="/img/accelerometer_walking.jpg" ><img src="/img/grouped_images.jpg"  alt="Walking activity"></a>
   	</div>
-	<div>
-		<a href="/img/accelerometer_jogging.jpg"><img src="/img/accelerometer_jogging.jpg"  alt="Jogging activity"></a>
-	</div>
-	<div>
-		<a href="/img/accelerometer_upstairs.jpg"><img src="/img/accelerometer_upstairs.jpg"  alt="Upstairs activity"></a>
-	</div>
-	<div>
-		<a href="/img/accelerometer_downstairs.jpg"><img src="/img/accelerometer_downstairs.jpg"  alt="Downstairs activity"></a>
-	</div>
-	<div>
-		<a href="/img/accelerometer_standing.jpg"><img src="/img/accelerometer_standing.jpg"  alt="Standing activity"></a>
-	</div>
-	<div>
-		<a href="/img/accelerometer_sitting.jpg"><img src="/img/accelerometer_sitting.jpg"  alt="Sitting activity"></a>
-	</div>
+
 
 The understanding of these graphics are essential to notice patterns for each activity and then recognize it.
 For example we observe repeating waves and peaks for the following repetitive activities walking, jogging, ascending stairs and descending stairs.
