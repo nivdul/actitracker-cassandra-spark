@@ -38,7 +38,6 @@ public class RecognizeActivity {
     CassandraJavaRDD<CassandraRow> cassandraRowsRDD = javaFunctions(sc).cassandraTable("actitracker", "users");
 
     // TODO issue @link:https://github.com/nivdul/actitracker-cassandra-spark/issues/1
-    long startTimeStamp = 110821191627000L; // use as variable
 
     List<LabeledPoint> labeledPoints = new ArrayList<>();
 
@@ -48,7 +47,7 @@ public class RecognizeActivity {
 
         // create bucket of sorted data
         CassandraJavaRDD<CassandraRow> user = cassandraRowsRDD.select("timestamp", "acc_x", "acc_y", "acc_z")
-                                                      .where("user_id=? AND activity=? AND timestamp >=?", i, activity, startTimeStamp)
+                                                      .where("user_id=? AND activity=?", i, activity)
                                                       .withAscOrder()
                                                       .limit(150L); // define the right number. 100 seems to be fine
 

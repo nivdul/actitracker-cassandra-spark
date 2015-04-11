@@ -92,7 +92,7 @@ public class ExtractFeature {
                                    .map(record -> record[0])
                                    .sortBy(time -> time, true, 1);
 
-    if (filtered_y.count() > 0) {
+    if (filtered_y.count() > 1) {
       Long firstElement = filtered_y.first();
       Long lastElement = filtered_y.sortBy(time -> time, false, 1).first();
 
