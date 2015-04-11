@@ -92,20 +92,24 @@ public class ExtractFeature {
                                    .map(record -> record[0])
                                    .sortBy(time -> time, true, 1);
 
-    Long firstElement = filtered_y.first();
-    Long lastElement = filtered_y.sortBy(time -> time, false, 1).first();
+    if (filtered_y.count() > 0) {
+      Long firstElement = filtered_y.first();
+      Long lastElement = filtered_y.sortBy(time -> time, false, 1).first();
 
-    // compute the delta between each tick
-    JavaRDD<Long> firstRDD = filtered_y.filter(record -> record > firstElement);
-    JavaRDD<Long> secondRDD = filtered_y.filter(record -> record < lastElement);
+      // compute the delta between each tick
+      JavaRDD<Long> firstRDD = filtered_y.filter(record -> record > firstElement);
+      JavaRDD<Long> secondRDD = filtered_y.filter(record -> record < lastElement);
 
-    JavaRDD<Vector> product = firstRDD.cartesian(secondRDD)
-                                    .map(pair -> pair._1() - pair._2())
-                                    // and keep it if the delta is != 0
-                                    .filter(value -> value > 0)
-                                    .map(line -> Vectors.dense(line));
-    // compute the mean of the delta
-    return Statistics.colStats(product.rdd()).mean().toArray()[0];
+      JavaRDD<Vector> product = firstRDD.cartesian(secondRDD)
+          .map(pair -> pair._1() - pair._2())
+              // and keep it if the delta is != 0
+          .filter(value -> value > 0)
+          .map(line -> Vectors.dense(line));
+      // compute the mean of the delta
+      return Statistics.colStats(product.rdd()).mean().toArray()[0];
+    }
+
+    return 0.0;
   }
 
 }

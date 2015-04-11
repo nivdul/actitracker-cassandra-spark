@@ -21,7 +21,7 @@ public class DecisionTrees {
   }
 
   public Double createModel() {
-    // parameters TODO refactor
+    // parameters
     Map<Integer, Integer> categoricalFeaturesInfo = new HashMap<>();
     int numClasses = 4;
     String impurity = "gini";
@@ -33,6 +33,7 @@ public class DecisionTrees {
 
     // Evaluate model on training instances and compute training error
     JavaPairRDD<Double, Double> predictionAndLabel = testData.mapToPair(p -> new Tuple2<>(model.predict(p.features()), p.label()));
+
     Double testErrDT = 1.0 * predictionAndLabel.filter(pl -> !pl._1().equals(pl._2())).count() / testData.count();
 
     return testErrDT;
