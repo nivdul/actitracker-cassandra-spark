@@ -26,7 +26,7 @@ public class RandomForests {
   public Double createModel() {
     // parameters
     Map<Integer, Integer> categoricalFeaturesInfo = new HashMap<Integer, Integer>();
-    int numTrees = 4;
+    int numTrees = 10;
     int numClasses = 4;
     String featureSubsetStrategy = "auto";
     String impurity = "gini";
