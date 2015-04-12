@@ -1,6 +1,7 @@
 package com.actitracker.data;
 
 
+import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.mllib.linalg.Vector;
 import org.apache.spark.mllib.linalg.Vectors;
@@ -92,7 +93,7 @@ public class ExtractFeature {
     JavaRDD<Long> filtered_y = data.filter(record -> record[1] > 0.9 * max[1])
                                    .map(record -> record[0])
                                    .sortBy(time -> time, true, 1);
-    System.out.println(filtered_y.count());
+
     if (filtered_y.count() > 1) {
       Long firstElement = filtered_y.first();
       Long lastElement = filtered_y.sortBy(time -> time, false, 1).first();
@@ -101,14 +102,12 @@ public class ExtractFeature {
       JavaRDD<Long> firstRDD = filtered_y.filter(record -> record > firstElement);
       JavaRDD<Long> secondRDD = filtered_y.filter(record -> record < lastElement);
 
-      JavaRDD<Vector> product = firstRDD.cartesian(secondRDD)
-          .map(pair -> pair._1() - pair._2())
-              // and keep it if the delta is != 0
-          .filter(value -> value > 0)
-          .map(line -> Vectors.dense(line));
+      JavaRDD<Vector> product = firstRDD.zip(secondRDD)
+                                        .map(pair -> pair._1() - pair._2())
+                                            // and keep it if the delta is != 0
+                                        .filter(value -> value > 0)
+                                        .map(line -> Vectors.dense(line));
 
-      System.out.println("product " + product.count());
-      System.out.println("product " + product.take(8));
       // compute the mean of the delta
       return Statistics.colStats(product.rdd()).mean().toArray()[0];
     }

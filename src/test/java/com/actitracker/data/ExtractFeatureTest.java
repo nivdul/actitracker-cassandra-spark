@@ -80,7 +80,6 @@ public class ExtractFeatureTest {
     // run
     double avgTimePeak = extractFeature.computeAvgTimeBetweenPeak(data_with_ts);
     // assert
-    System.out.println(avgTimePeak);
     Assert.assertTrue(1.0 == Math.round(avgTimePeak*100)/100.0);
   }
 }

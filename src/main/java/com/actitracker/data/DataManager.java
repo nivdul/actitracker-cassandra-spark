@@ -13,8 +13,8 @@ public class DataManager {
 
     // first transform CassandraRDD into a RDD<Map>
     return data.map(CassandraRow::toMap)
-                // then build  a double array from the RDD<Map>
-                .map(entry -> new double[]{(double) entry.get("acc_x"), (double) entry.get("acc_y"), (double) entry.get("acc_z")})
+               // then build  a double array from the RDD<Map>
+               .map(entry -> new double[]{(double) entry.get("acc_x"), (double) entry.get("acc_y"), (double) entry.get("acc_z")})
                // to finish apply the dense method
                .map(Vectors::dense);
   }
