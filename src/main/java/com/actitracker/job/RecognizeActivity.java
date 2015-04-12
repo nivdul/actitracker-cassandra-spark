@@ -127,26 +127,21 @@ public class RecognizeActivity {
       JavaRDD<LabeledPoint> data = sc.parallelize(labeledPoints);
 
       // create model prediction and train data on it
-      Double meanRF = 0.0;
-      Double meanDT = 0.0;
 
-      for (int i = 0; i < 1; i++) {
-        // Split data into 2 sets : training (60%) and test (40%).
-        JavaRDD<LabeledPoint>[] splits = data.randomSplit(new double[]{0.6, 0.4});
-        JavaRDD<LabeledPoint> trainingData = splits[0].cache();
-        JavaRDD<LabeledPoint> testData = splits[1];
+      // Split data into 2 sets : training (60%) and test (40%).
+      JavaRDD<LabeledPoint>[] splits = data.randomSplit(new double[]{0.6, 0.4});
+      JavaRDD<LabeledPoint> trainingData = splits[0].cache();
+      JavaRDD<LabeledPoint> testData = splits[1];
 
-        // With Random Forest
-        meanRF += new RandomForests(trainingData, testData).createModel();
+      // With Random Forest
+      double errRF = new RandomForests(trainingData, testData).createModel();
 
-        // With DecisionTree
-        meanDT += new DecisionTrees(trainingData, testData).createModel();
-
-      }
+      // With DecisionTree
+      double errDT = new DecisionTrees(trainingData, testData).createModel();
 
       System.out.println("sample size " + labeledPoints.size());
-      System.out.println("Test Error Random Forest: " + meanRF);
-      System.out.println("Test Error Decision Tree: " + meanDT);
+      System.out.println("Test Error Random Forest: " + errRF);
+      System.out.println("Test Error Decision Tree: " + errDT);
 
     }
   }
