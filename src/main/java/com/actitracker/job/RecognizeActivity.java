@@ -29,7 +29,7 @@ public class RecognizeActivity {
 
     // define Spark context
     SparkConf sparkConf = new SparkConf()
-                                  .setAppName("Actitracker")
+                                  .setAppName("User's physical activity recognition")
                                   .set("spark.cassandra.connection.host", "127.0.0.1")
                                   .setMaster("local[*]");
 
@@ -38,45 +38,57 @@ public class RecognizeActivity {
     // retrieve data from Cassandra and create an CassandraRDD
     CassandraJavaRDD<CassandraRow> cassandraRowsRDD = javaFunctions(sc).cassandraTable("actitracker", "users");
 
-    // TODO issue @link:https://github.com/nivdul/actitracker-cassandra-spark/issues/1
-
     List<LabeledPoint> labeledPoints = new ArrayList<>();
 
-
-    for (int i = 1; i < 38; i++) {
+    for (int i = 1; i < 2; i++) {
 
       for (String activity: ACTIVITIES) {
 
-        // create bucket of sorted data
+        // create bucket of sorted data by ascending timestamp
         CassandraJavaRDD<CassandraRow> times = cassandraRowsRDD.select("timestamp")
                                                                   .where("user_id=? AND activity=?", i, activity)
                                                                   .withAscOrder();
 
+        // if data
         if (times.count() > 0) {
           ////////////////////
-          // define windows //
+          // DEFINE THE WINDOWS
+          // The data sets provide data from 37 different users. And each user perform different activities several times.
+          // So I have defined several windows for each user and each activity to retrieve more samples.
           ////////////////////
 
-          // first define jump
+          // first find jumps to define the continuous periods of data
 
           //retrieve all timestamp
           JavaRDD<Long> ts = times.map(CassandraRow::toMap)
-                                    .map(entry -> (long) entry.get("timestamp"))
-                                    .sortBy(time -> time, true, 1);
+                                  .map(entry -> (long) entry.get("timestamp"));
+
           // compute the difference between each timestamp
           Long firstElement = ts.first();
           Long lastElement = ts.sortBy(time -> time, false, 1).first();
 
-          JavaRDD<Long> first_ts = ts.filter(record -> record > firstElement);
-          JavaRDD<Long> second_ts = ts.filter(record -> record < lastElement);
+          JavaRDD<Long> firstRDD = ts.filter(record -> record > firstElement);
+          JavaRDD<Long> secondRDD = ts.filter(record -> record < lastElement);
 
-          JavaPairRDD<Long,Long> ts_jump_70000000 = first_ts.zip(second_ts)
-              .mapToPair(pair -> new Tuple2<>(pair._1(), pair._1() - pair._2()))
-              .filter(pair -> pair._2() > 70000000);
+          // define periods of recording
+          JavaPairRDD<Long[], Long> tsBoundaries = firstRDD.zip(secondRDD)
+                                                           .mapToPair(pair -> new Tuple2<>(new Long[]{pair._2, pair._1}, pair._1 - pair._2));
 
-          // define periods
-          Long firstElement_ts_jump = ts_jump_70000000.first()._1();
-          Long lastElement_ts_jump = ts_jump_70000000.sortByKey(false).first()._1();
+          // if the difference is greater than 100 000 000, it must be different periods of recording
+          // ({min_boundary, max_boundary}, max_boundary - min_boundary > 100 000 000)
+          JavaPairRDD<Long[], Long> filteredBoundaries =  tsBoundaries.filter(pair -> pair._2 > 100000000);
+
+          System.out.println(tsBoundaries.count());
+
+
+          //tsBoundaries.map(pair -> new Long[]{pair._1[0], (long) Math.round((pair._1[1] - pair._1[0]) / 5000000000L)})
+          //                                    .sortBy(time -> time[0], true, 1);
+
+
+
+
+         /* Long firstElement_ts_jump = tsBoundaries.first()._1();
+          Long lastElement_ts_jump = tsBoundaries.sortByKey(false).first()._1();
 
           JavaRDD<Long> first_ts_jump = ts_jump_70000000.filter(record -> record._1() > firstElement_ts_jump).map(pair -> pair._1());
           JavaRDD<Long> second_ts_jump = ts_jump_70000000.filter(record -> record._1() < lastElement_ts_jump).map(pair -> pair._1());
@@ -164,11 +176,12 @@ public class RecognizeActivity {
                 labeledPoints.add(labeledPoint);
               }
             }
-          }
+          }*/
         }
       }
     }
-    System.out.println("labeledPoints " + labeledPoints.size());
+
+    /*System.out.println("labeledPoints " + labeledPoints.size());
 
     if (labeledPoints.size() > 0) {
       // data ready to be used to build the model
@@ -191,6 +204,6 @@ public class RecognizeActivity {
       //System.out.println("Test Error Random Forest: " + errRF);
       System.out.println("Test Error Decision Tree: " + errDT);
 
-    }
+    }*/
   }
 }
