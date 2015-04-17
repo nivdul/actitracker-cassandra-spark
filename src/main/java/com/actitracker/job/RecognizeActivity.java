@@ -3,6 +3,7 @@ package com.actitracker.job;
 
 import com.actitracker.data.DataManager;
 import com.actitracker.data.ExtractFeature;
+import com.actitracker.data.PrepareData;
 import com.actitracker.model.DecisionTrees;
 import com.datastax.spark.connector.japi.CassandraRow;
 import com.datastax.spark.connector.japi.rdd.CassandraJavaRDD;
@@ -13,7 +14,6 @@ import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.mllib.linalg.Vector;
 import org.apache.spark.mllib.linalg.Vectors;
 import org.apache.spark.mllib.regression.LabeledPoint;
-import scala.Tuple2;
 
 import java.util.*;
 
@@ -51,8 +51,9 @@ public class RecognizeActivity {
 
         // if data
         if (times.count() > 0) {
+
           ////////////////////
-          // DEFINE THE WINDOWS
+          // DEFINE THE INTERVALS ON WHICH EXTRACT WINDOWS
           // The data sets provide data from 37 different users. And each user perform different activities several times.
           // So I have defined several windows for each user and each activity to retrieve more samples.
           ////////////////////
@@ -63,47 +64,26 @@ public class RecognizeActivity {
           JavaRDD<Long> ts = times.map(CassandraRow::toMap)
                                   .map(entry -> (long) entry.get("timestamp"));
 
-          // compute the difference between each timestamp
           Long firstElement = ts.first();
           Long lastElement = ts.sortBy(time -> time, false, 1).first();
 
-          JavaRDD<Long> firstRDD = ts.filter(record -> record > firstElement);
-          JavaRDD<Long> secondRDD = ts.filter(record -> record < lastElement);
+          // compute the difference between each timestamp
+          JavaPairRDD<Long[], Long> tsBoundariesDiff = PrepareData.boudariesDiff(ts);
 
           // define periods of recording
-          JavaPairRDD<Long[], Long> tsBoundaries = firstRDD.zip(secondRDD)
-                                                           .mapToPair(pair -> new Tuple2<>(new Long[]{pair._2, pair._1}, pair._1 - pair._2));
-
           // if the difference is greater than 100 000 000, it must be different periods of recording
           // ({min_boundary, max_boundary}, max_boundary - min_boundary > 100 000 000)
-          JavaPairRDD<Long[], Long> filteredBoundaries =  tsBoundaries.filter(pair -> pair._2 > 100000000);
+          JavaPairRDD<Long, Long> jumps = PrepareData.defineJump(tsBoundariesDiff);
 
-          System.out.println(tsBoundaries.count());
-
-
-          //tsBoundaries.map(pair -> new Long[]{pair._1[0], (long) Math.round((pair._1[1] - pair._1[0]) / 5000000000L)})
-          //                                    .sortBy(time -> time[0], true, 1);
+          // Now define interval
+          List<Long[]> intervals = PrepareData.defineInterval(jumps, firstElement, lastElement);
 
 
-
-
-         /* Long firstElement_ts_jump = tsBoundaries.first()._1();
-          Long lastElement_ts_jump = tsBoundaries.sortByKey(false).first()._1();
-
-          JavaRDD<Long> first_ts_jump = ts_jump_70000000.filter(record -> record._1() > firstElement_ts_jump).map(pair -> pair._1());
-          JavaRDD<Long> second_ts_jump = ts_jump_70000000.filter(record -> record._1() < lastElement_ts_jump).map(pair -> pair._1());
-
-          // start, end, window number
-          JavaRDD<Long[]> periodsRDD = first_ts_jump.zip(second_ts_jump)
-              .map(tuple -> new Long[]{tuple._1(), tuple._2(), (long) Math.round((tuple._1() - tuple._2()) / 5000000000L)});
-
-          List<Long[]> periods = periodsRDD.collect();
-
-          for (Long[] period: periods) {
-            for (int j = 0; j < period[2]; j++) {
+          for (Long[] interval: intervals) {
+            for (int j = 0; j < interval[2]; j++) {
 
               CassandraJavaRDD<CassandraRow> user = cassandraRowsRDD.select("timestamp", "acc_x", "acc_y", "acc_z")
-                  .where("user_id=? AND activity=? AND timestamp < ? AND timestamp > ?", i, activity, period[1] + j * 5000000000L, period[1] + (j - 1) * 5000000000L)
+                  .where("user_id=? AND activity=? AND timestamp < ? AND timestamp > ?", i, activity, interval[1] + j * 5000000000L, interval[1] + (j - 1) * 5000000000L)
                   .withAscOrder();
 
               if (user.count() > 0) {
@@ -176,12 +156,12 @@ public class RecognizeActivity {
                 labeledPoints.add(labeledPoint);
               }
             }
-          }*/
+          }
         }
       }
     }
 
-    /*System.out.println("labeledPoints " + labeledPoints.size());
+    System.out.println("labeledPoints " + labeledPoints.size());
 
     if (labeledPoints.size() > 0) {
       // data ready to be used to build the model
@@ -204,6 +184,6 @@ public class RecognizeActivity {
       //System.out.println("Test Error Random Forest: " + errRF);
       System.out.println("Test Error Decision Tree: " + errDT);
 
-    }*/
+    }
   }
 }

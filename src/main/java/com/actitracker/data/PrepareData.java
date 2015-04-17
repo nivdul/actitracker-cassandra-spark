@@ -12,7 +12,7 @@ import java.util.List;
 
 public class PrepareData {
 
-  public JavaPairRDD<Long[], Long> boudariesDiff(JavaRDD<Long> timestamps) {
+  public static JavaPairRDD<Long[], Long> boudariesDiff(JavaRDD<Long> timestamps) {
 
     Long firstElement = timestamps.first();
     Long lastElement = timestamps.sortBy(time -> time, false, 1).first();
@@ -22,22 +22,22 @@ public class PrepareData {
 
     // define periods of recording
     JavaPairRDD<Long[], Long> tsBoundaries = firstRDD.zip(secondRDD)
-        .mapToPair(pair -> new Tuple2<>(new Long[]{pair._1, pair._2}, pair._1 - pair._2));
+                                                     .mapToPair(pair -> new Tuple2<>(new Long[]{pair._1, pair._2}, pair._1 - pair._2));
 
     return tsBoundaries;
   }
 
-  public JavaPairRDD<Long, Long> defineJump(JavaPairRDD<Long[], Long> tsBoundaries) {
+  public static JavaPairRDD<Long, Long> defineJump(JavaPairRDD<Long[], Long> tsBoundaries) {
     return tsBoundaries.filter(pair -> pair._2 > 100000000)
                        .mapToPair(pair -> new Tuple2<>(pair._1[1], pair._1[0]));
   }
 
   // (min, max)
-  public List<Long[]> defineInterval(JavaPairRDD<Long, Long> tsJump, Long firstElement, Long lastElement) {
+  public static List<Long[]> defineInterval(JavaPairRDD<Long, Long> tsJump, Long firstElement, Long lastElement) {
 
     List<Long> flatten = tsJump.flatMap(pair -> Arrays.asList(pair._1, pair._2))
-                                  .sortBy(t -> t, true, 1)
-                                  .collect();
+                               .sortBy(t -> t, true, 1)
+                               .collect();
 
     int size = flatten.size(); // always even
 
@@ -55,7 +55,8 @@ public class PrepareData {
     return results;
   }
 
-  public JavaRDD<Long[]> computeNbWindowsByInterval(List<Long[]> intervals, JavaSparkContext sc, int windows) {
+  public static JavaRDD<Long[]> computeNbWindowsByInterval(List<Long[]> intervals, JavaSparkContext sc, int windows) {
+
     return sc.parallelize(intervals)
              .map(pair -> new Long[]{pair[0], pair[1], (long) Math.round((pair[1] - pair[0]) / windows)})
              .filter(line -> 0 != line[2]);

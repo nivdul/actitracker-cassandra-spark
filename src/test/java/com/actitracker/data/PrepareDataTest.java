@@ -14,13 +14,11 @@ import static org.junit.Assert.*;
 
 public class PrepareDataTest {
 
-  private PrepareData prepareData;
   private JavaRDD<Long> ts;
   private JavaSparkContext sc;
 
   @Before
   public void init() {
-    prepareData = new PrepareData();
 
     SparkConf conf = new SparkConf().setAppName("test extract feature")
         .setMaster("local[*]");
@@ -33,7 +31,7 @@ public class PrepareDataTest {
   @Test
   public void compute_boudaries_and_diff() {
     // Run
-    JavaPairRDD<Long[], Long> result = prepareData.boudariesDiff(ts);
+    JavaPairRDD<Long[], Long> result = PrepareData.boudariesDiff(ts);
     // Assert
     assertEquals(18, ts.count());
     assertEquals(17, result.count());
@@ -53,9 +51,9 @@ public class PrepareDataTest {
 
   @Test public void define_jump() {
     // Init
-    JavaPairRDD<Long[], Long> boundariesDiff = prepareData.boudariesDiff(ts);
+    JavaPairRDD<Long[], Long> boundariesDiff = PrepareData.boudariesDiff(ts);
     // Run
-    JavaPairRDD<Long, Long> result = prepareData.defineJump(boundariesDiff);
+    JavaPairRDD<Long, Long> result = PrepareData.defineJump(boundariesDiff);
     // Assert
     assertEquals(4, result.count());
 
@@ -78,11 +76,11 @@ public class PrepareDataTest {
     Long firstElement = ts.first();
     Long lastElement = ts.sortBy(t -> t, false, 1).first();
 
-    JavaPairRDD<Long[], Long> boundariesDiff = prepareData.boudariesDiff(ts);
+    JavaPairRDD<Long[], Long> boundariesDiff = PrepareData.boudariesDiff(ts);
 
-    JavaPairRDD<Long, Long> jump = prepareData.defineJump(boundariesDiff);
+    JavaPairRDD<Long, Long> jump = PrepareData.defineJump(boundariesDiff);
     // Run
-    List<Long[]> result = prepareData.defineInterval(jump, firstElement, lastElement);
+    List<Long[]> result = PrepareData.defineInterval(jump, firstElement, lastElement);
     // Assert
     assertEquals(5, result.size());
 
@@ -107,13 +105,13 @@ public class PrepareDataTest {
     Long firstElement = ts.first();
     Long lastElement = ts.sortBy(t -> t, false, 1).first();
 
-    JavaPairRDD<Long[], Long> boundariesDiff = prepareData.boudariesDiff(ts);
+    JavaPairRDD<Long[], Long> boundariesDiff = PrepareData.boudariesDiff(ts);
 
-    JavaPairRDD<Long, Long> jump = prepareData.defineJump(boundariesDiff);
+    JavaPairRDD<Long, Long> jump = PrepareData.defineJump(boundariesDiff);
 
-    List<Long[]> intervals = prepareData.defineInterval(jump, firstElement, lastElement);
+    List<Long[]> intervals = PrepareData.defineInterval(jump, firstElement, lastElement);
     // Run
-    JavaRDD<Long[]> result = prepareData.computeNbWindowsByInterval(intervals, sc, 30000000);
+    JavaRDD<Long[]> result = PrepareData.computeNbWindowsByInterval(intervals, sc, 30000000);
     // Assert
     assertEquals(4, result.count());
 
