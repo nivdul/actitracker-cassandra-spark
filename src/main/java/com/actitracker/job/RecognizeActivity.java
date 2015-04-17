@@ -76,8 +76,7 @@ public class RecognizeActivity {
           JavaPairRDD<Long, Long> jumps = PrepareData.defineJump(tsBoundariesDiff);
 
           // Now define interval
-          List<Long[]> intervals = PrepareData.defineInterval(jumps, firstElement, lastElement);
-
+          List<Long[]> intervals = PrepareData.defineInterval(jumps, firstElement, lastElement, 5000000000L);
 
           for (Long[] interval: intervals) {
             for (int j = 0; j < interval[2]; j++) {

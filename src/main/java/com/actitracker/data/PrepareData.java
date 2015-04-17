@@ -9,6 +9,7 @@ import scala.Tuple2;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Predicate;
 
 public class PrepareData {
 
@@ -33,7 +34,7 @@ public class PrepareData {
   }
 
   // (min, max)
-  public static List<Long[]> defineInterval(JavaPairRDD<Long, Long> tsJump, Long firstElement, Long lastElement) {
+  public static List<Long[]> defineInterval(JavaPairRDD<Long, Long> tsJump, Long firstElement, Long lastElement, long windows) {
 
     List<Long> flatten = tsJump.flatMap(pair -> Arrays.asList(pair._1, pair._2))
                                .sortBy(t -> t, true, 1)
@@ -43,22 +44,18 @@ public class PrepareData {
 
     List<Long[]> results = new ArrayList<>();
     // init condition
-    results.add(new Long[]{firstElement, flatten.get(0)});
+    results.add(new Long[]{firstElement, flatten.get(0), (long) Math.round((flatten.get(0) - firstElement) / windows)});
 
     for (int i = 1; i < size - 1; i+=2) {
-      results.add(new Long[]{flatten.get(i), flatten.get(i + 1)});
+      results.add(new Long[]{flatten.get(i), flatten.get(i + 1), (long) Math.round((flatten.get(i + 1) - flatten.get(i)) / windows)});
     }
 
     // end limite
-    results.add(new Long[]{flatten.get(size - 1), lastElement});
+    results.add(new Long[]{flatten.get(size - 1), lastElement, (long) Math.round((lastElement - flatten.get(size - 1)) / windows)});
+
+    results.removeIf(longs -> 0 == longs[2]);
 
     return results;
   }
 
-  public static JavaRDD<Long[]> computeNbWindowsByInterval(List<Long[]> intervals, JavaSparkContext sc, int windows) {
-
-    return sc.parallelize(intervals)
-             .map(pair -> new Long[]{pair[0], pair[1], (long) Math.round((pair[1] - pair[0]) / windows)})
-             .filter(line -> 0 != line[2]);
-  }
 }

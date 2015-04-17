@@ -80,56 +80,25 @@ public class PrepareDataTest {
 
     JavaPairRDD<Long, Long> jump = PrepareData.defineJump(boundariesDiff);
     // Run
-    List<Long[]> result = PrepareData.defineInterval(jump, firstElement, lastElement);
+    List<Long[]> result = PrepareData.defineInterval(jump, firstElement, lastElement, 30000000);
     // Assert
-    assertEquals(5, result.size());
+    assertEquals(4, result.size());
 
     assertEquals(10000000, (long) result.get(0)[0]);
     assertEquals(50000000, (long) result.get(0)[1]);
+    assertEquals(1, (long) result.get(0)[2]);
 
     assertEquals(160000000, (long) result.get(1)[0]);
     assertEquals(190000000, (long) result.get(1)[1]);
+    assertEquals(1, (long) result.get(1)[2]);
 
     assertEquals(300000000, (long) result.get(2)[0]);
     assertEquals(360000000, (long) result.get(2)[1]);
+    assertEquals(2, (long) result.get(2)[2]);
 
-    assertEquals(480000000, (long) result.get(3)[0]);
-    assertEquals(490000000, (long) result.get(3)[1]);
-
-    assertEquals(600000000, (long) result.get(4)[0]);
-    assertEquals(640000000, (long) result.get(4)[1]);
+    assertEquals(600000000, (long) result.get(3)[0]);
+    assertEquals(640000000, (long) result.get(3)[1]);
+    assertEquals(1, (long) result.get(3)[2]);
   }
 
-  @Test public void compute_nb_windows_by_interval_recording() {
-    // Init
-    Long firstElement = ts.first();
-    Long lastElement = ts.sortBy(t -> t, false, 1).first();
-
-    JavaPairRDD<Long[], Long> boundariesDiff = PrepareData.boudariesDiff(ts);
-
-    JavaPairRDD<Long, Long> jump = PrepareData.defineJump(boundariesDiff);
-
-    List<Long[]> intervals = PrepareData.defineInterval(jump, firstElement, lastElement);
-    // Run
-    JavaRDD<Long[]> result = PrepareData.computeNbWindowsByInterval(intervals, sc, 30000000);
-    // Assert
-    assertEquals(4, result.count());
-
-    assertEquals(10000000, (long) result.take(4).get(0)[0]);
-    assertEquals(50000000, (long) result.take(4).get(0)[1]);
-    assertEquals(1, (long) result.take(4).get(0)[2]);
-
-    assertEquals(160000000, (long) result.take(4).get(1)[0]);
-    assertEquals(190000000, (long) result.take(4).get(1)[1]);
-    assertEquals(1, (long) result.take(4).get(1)[2]);
-
-    assertEquals(300000000, (long) result.take(4).get(2)[0]);
-    assertEquals(360000000, (long) result.take(4).get(2)[1]);
-    assertEquals(2, (long) result.take(4).get(2)[2]);
-
-    assertEquals(600000000, (long) result.take(4).get(3)[0]);
-    assertEquals(640000000, (long) result.take(4).get(3)[1]);
-    assertEquals(1, (long) result.take(4).get(3)[2]);
-
-  }
 }
