@@ -1,7 +1,6 @@
 package com.actitracker.data;
 
 
-import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.mllib.linalg.Vector;
 import org.apache.spark.mllib.linalg.Vectors;
@@ -57,8 +56,8 @@ public class ExtractFeature {
     // then for each point x compute x - mean
     // then apply an absolute value: |x - mean|
     JavaRDD<Vector> abs = data.map(record -> new double[]{Math.abs(record[0] - mean[0]),
-        Math.abs(record[1] - mean[1]),
-        Math.abs(record[2] - mean[2])})
+                                                          Math.abs(record[1] - mean[1]),
+                                                          Math.abs(record[2] - mean[2])})
                               .map(Vectors::dense);
 
     // And to finish apply the mean: for each axis (1 / n ) * ∑ |b - mean|
@@ -83,12 +82,11 @@ public class ExtractFeature {
 
   }
 
-  // TODO fix it @link:https://github.com/nivdul/actitracker-cassandra-spark/issues/7
   public Double computeAvgTimeBetweenPeak(JavaRDD<long[]> data) {
     // define the maximum
     double[] max = this.summary.max().toArray();
 
-    // keep the timestamp of data point for which the value is greather than 0.9 * max
+    // keep the timestamp of data point for which the value is greater than 0.9 * max
     // and sort it !
     JavaRDD<Long> filtered_y = data.filter(record -> record[1] > 0.9 * max[1])
                                    .map(record -> record[0])
@@ -104,7 +102,7 @@ public class ExtractFeature {
 
       JavaRDD<Vector> product = firstRDD.zip(secondRDD)
                                         .map(pair -> pair._1() - pair._2())
-                                            // and keep it if the delta is != 0
+                                         // and keep it if the delta is != 0
                                         .filter(value -> value > 0)
                                         .map(line -> Vectors.dense(line));
 

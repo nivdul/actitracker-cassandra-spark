@@ -74,7 +74,6 @@ public class ExtractFeatureTest {
     Assert.assertTrue(9.73 == Math.round(resultant*100)/100.0);
   }
 
-  // TODO fix it !
   @Test
   public void average_time_between_peaks_y() {
     // run

@@ -14,7 +14,6 @@ import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.mllib.linalg.Vector;
 import org.apache.spark.mllib.linalg.Vectors;
 import org.apache.spark.mllib.regression.LabeledPoint;
-import scala.Tuple2;
 
 import java.util.*;
 
@@ -59,10 +58,9 @@ public class RecognizeActivity {
         // if data
         if (100 < times.count()) {
 
-          ////////////////////
-          // DEFINE THE INTERVALS ON WHICH EXTRACT WINDOWS
-          // The data sets provide data from 37 different users. And each user perform different activities several times.
-          // So I have defined several windows for each user and each activity to retrieve more samples.
+          //////////////////////////////////////////////////////////////////////////////
+          // PREPARE THE DATA: define the windows for each activity records intervals //
+          //////////////////////////////////////////////////////////////////////////////
 
           // first find jumps to define the continuous periods of data
           Long firstElement = times.first();
@@ -80,80 +78,44 @@ public class RecognizeActivity {
           List<Long[]> intervals = PrepareData.defineInterval(jumps, firstElement, lastElement, 5000000000L);
 
           for (Long[] interval: intervals) {
-
             for (int j = 0; j < interval[2]; j++) {
 
-              CassandraJavaRDD<CassandraRow> user = cassandraRowsRDD.select("timestamp", "acc_x", "acc_y", "acc_z")
-                                                                    .where("user_id=? AND activity=? AND timestamp < ? AND timestamp > ?", i, activity, interval[1] + j * 5000000000L, interval[1] + (j - 1) * 5000000000L)
-                                                                    .withAscOrder();
+              JavaRDD<CassandraRow> data = cassandraRowsRDD.select("timestamp", "acc_x", "acc_y", "acc_z")
+                  .where("user_id=? AND activity=? AND timestamp < ? AND timestamp > ?", i, activity, interval[1] + j * 5000000000L, interval[1] + (j - 1) * 5000000000L)
+                  .withAscOrder().cache();
 
-              if (user.count() > 0) {
+              if (data.count() > 0) {
+                // transform into double array
+                JavaRDD<double[]> doubles = DataManager.toDouble(data);
                 // transform into vector without timestamp
-                JavaRDD<Vector> vectors = DataManager.toVector(user);
-                // transform into array
-                JavaRDD<double[]> doubles = DataManager.toDouble(user);
+                JavaRDD<Vector> vectors = doubles.map(Vectors::dense);
                 // data with only timestamp and acc
-                JavaRDD<long[]> timestamp = DataManager.withTimestamp(user);
+                JavaRDD<long[]> timestamp = DataManager.withTimestamp(data);
 
-                ///////////////////////////////////////
-                // extract features from this bucket //
-                ///////////////////////////////////////
+                ////////////////////////////////////////
+                // extract features from this windows //
+                ////////////////////////////////////////
 
                 // the average acceleration
                 ExtractFeature extractFeature = new ExtractFeature(vectors);
 
                 double[] mean = extractFeature.computeAvgAcc();
-                //System.out.println("Average (mean_x, mean_y, mean_z): " + mean[0] + "," + mean[1] + "," + mean[2]);
 
                 // the variance
                 double[] variance = extractFeature.computeVariance();
-                //System.out.println("Variance (var_x, var_y, var_z): " + variance[0] + "," + variance[1] + "," + variance[2]);
 
                 // the average absolute difference
                 double[] avgAbsDiff = computeAvgAbsDifference(doubles, mean);
-                //System.out.println("Average absolute difference (avg_abs_diff_x, avg_abs_diff_y, avg_abs_diff_z): " + avgAbsDiff[0] + "," + avgAbsDiff[1] + "," + avgAbsDiff[2]);
 
                 // the average resultant acceleration
                 double resultant = computeResultantAcc(doubles);
-                //System.out.println("Average resultant acceleration (res): " + resultant);
 
                 // the average time between peaks
                 double avgTimePeak = extractFeature.computeAvgTimeBetweenPeak(timestamp);
-                //System.out.println("Average time between peaks (peak_y): " + avgTimePeak);
-
-
-                // build the data set with label & features (11)
-                // activity, mean_x, mean_y, mean_z, var_x, var_y, var_z, avg_abs_diff_x, avg_abs_diff_y, avg_abs_diff_z, res, peak_y
 
                 // Let's build LabeledPoint, the structure used in MLlib to create and a predictive model
+                LabeledPoint labeledPoint = getLabeledPoint(activity, mean, variance, avgAbsDiff, resultant, avgTimePeak);
 
-                // First the features
-                double[] features = new double[]{
-                    mean[0],
-                    mean[1],
-                    mean[2],
-                    variance[0],
-                    variance[1],
-                    variance[2],
-                    avgAbsDiff[0],
-                    avgAbsDiff[1],
-                    avgAbsDiff[2],
-                    resultant,
-                    avgTimePeak
-                };
-
-                // Now the label
-                double label = 0;
-
-                if ("Jogging".equals(activity)) {
-                  label = 1;
-                } else if ("Standing".equals(activity)) {
-                  label = 2;
-                } else if ("Sitting".equals(activity)) {
-                  label = 3;
-                }
-
-                LabeledPoint labeledPoint = new LabeledPoint(label, Vectors.dense(features));
                 labeledPoints.add(labeledPoint);
               }
             }
@@ -162,8 +124,9 @@ public class RecognizeActivity {
       }
     }
 
-    System.out.println("labeledPoints " + labeledPoints.size());
-
+    ////////////////////////////
+    // ML part with the models //
+    ////////////////////////////
     if (labeledPoints.size() > 0) {
       // data ready to be used to build the model
       JavaRDD<LabeledPoint> data = sc.parallelize(labeledPoints);
@@ -175,16 +138,51 @@ public class RecognizeActivity {
       JavaRDD<LabeledPoint> trainingData = splits[0].cache();
       JavaRDD<LabeledPoint> testData = splits[1];
 
-      // With Random Forest
-      //double errRF = new RandomForests(trainingData, testData).createModel();
-
       // With DecisionTree
       double errDT = new DecisionTrees(trainingData, testData).createModel();
 
+      // With Random Forest
+      //double errRF = new RandomForests(trainingData, testData).createModel();
+
       System.out.println("sample size " + labeledPoints.size());
-      //System.out.println("Test Error Random Forest: " + errRF);
       System.out.println("Test Error Decision Tree: " + errDT);
+      //System.out.println("Test Error Random Forest: " + errRF);
 
     }
+
+  }
+
+  /**
+    * build the data set with label & features (11)
+    * activity, mean_x, mean_y, mean_z, var_x, var_y, var_z, avg_abs_diff_x, avg_abs_diff_y, avg_abs_diff_z, res, peak_y
+   */
+  private static LabeledPoint getLabeledPoint(String activity, double[] mean, double[] variance, double[] avgAbsDiff, double resultant, double avgTimePeak) {
+    // First the feature
+    double[] features = new double[]{
+        mean[0],
+        mean[1],
+        mean[2],
+        variance[0],
+        variance[1],
+        variance[2],
+        avgAbsDiff[0],
+        avgAbsDiff[1],
+        avgAbsDiff[2],
+        resultant,
+        avgTimePeak
+    };
+
+    // Now the label: by default 0 for Walking
+    double label = 0;
+
+    if ("Jogging".equals(activity)) {
+      label = 1;
+    } else if ("Standing".equals(activity)) {
+      label = 2;
+    } else if ("Sitting".equals(activity)) {
+      label = 3;
+    }
+
+    return new LabeledPoint(label, Vectors.dense(features));
   }
 }
