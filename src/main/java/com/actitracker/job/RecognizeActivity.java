@@ -14,6 +14,7 @@ import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.mllib.linalg.Vector;
 import org.apache.spark.mllib.linalg.Vectors;
 import org.apache.spark.mllib.regression.LabeledPoint;
+import scala.Tuple2;
 
 import java.util.*;
 
@@ -45,30 +46,30 @@ public class RecognizeActivity {
       for (String activity: ACTIVITIES) {
 
         // create bucket of sorted data by ascending timestamp
-        CassandraJavaRDD<CassandraRow> times = cassandraRowsRDD.select("timestamp")
-                                                                  .where("user_id=? AND activity=?", i, activity)
-                                                                  .withAscOrder();
+        //retrieve all timestamp
+        JavaRDD<Long> times = cassandraRowsRDD.select("timestamp")
+                                              .where("user_id=? AND activity=?", i, activity)
+                                              .withAscOrder()
+                                              .map(CassandraRow::toMap)
+                                              .map(entry -> (long) entry.get("timestamp"))
+                                              .cache();
+
+
 
         // if data
-        if (times.count() > 0) {
+        if (100 < times.count()) {
 
           ////////////////////
           // DEFINE THE INTERVALS ON WHICH EXTRACT WINDOWS
           // The data sets provide data from 37 different users. And each user perform different activities several times.
           // So I have defined several windows for each user and each activity to retrieve more samples.
-          ////////////////////
 
           // first find jumps to define the continuous periods of data
-
-          //retrieve all timestamp
-          JavaRDD<Long> ts = times.map(CassandraRow::toMap)
-                                  .map(entry -> (long) entry.get("timestamp"));
-
-          Long firstElement = ts.first();
-          Long lastElement = ts.sortBy(time -> time, false, 1).first();
+          Long firstElement = times.first();
+          Long lastElement = times.sortBy(time -> time, false, 1).first();
 
           // compute the difference between each timestamp
-          JavaPairRDD<Long[], Long> tsBoundariesDiff = PrepareData.boudariesDiff(ts);
+          JavaPairRDD<Long[], Long> tsBoundariesDiff = PrepareData.boudariesDiff(times, firstElement, lastElement);
 
           // define periods of recording
           // if the difference is greater than 100 000 000, it must be different periods of recording
@@ -79,11 +80,12 @@ public class RecognizeActivity {
           List<Long[]> intervals = PrepareData.defineInterval(jumps, firstElement, lastElement, 5000000000L);
 
           for (Long[] interval: intervals) {
+
             for (int j = 0; j < interval[2]; j++) {
 
               CassandraJavaRDD<CassandraRow> user = cassandraRowsRDD.select("timestamp", "acc_x", "acc_y", "acc_z")
-                  .where("user_id=? AND activity=? AND timestamp < ? AND timestamp > ?", i, activity, interval[1] + j * 5000000000L, interval[1] + (j - 1) * 5000000000L)
-                  .withAscOrder();
+                                                                    .where("user_id=? AND activity=? AND timestamp < ? AND timestamp > ?", i, activity, interval[1] + j * 5000000000L, interval[1] + (j - 1) * 5000000000L)
+                                                                    .withAscOrder();
 
               if (user.count() > 0) {
                 // transform into vector without timestamp

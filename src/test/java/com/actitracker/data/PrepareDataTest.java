@@ -14,8 +14,10 @@ import static org.junit.Assert.*;
 
 public class PrepareDataTest {
 
-  private JavaRDD<Long> ts;
+  private JavaRDD<Long> times;
   private JavaSparkContext sc;
+  Long firstElement;
+  Long lastElement;
 
   @Before
   public void init() {
@@ -25,15 +27,19 @@ public class PrepareDataTest {
 
     sc = new JavaSparkContext(conf);
 
-    ts = sc.textFile("data/test2_ts.csv", 1).map(line -> Long.valueOf(line));
+    times = sc.textFile("data/test2_ts.csv", 1).map(line -> Long.valueOf(line));
+
+    firstElement = times.first();
+    lastElement = times.sortBy(time -> time, false, 1).first();
+
   }
 
   @Test
   public void compute_boudaries_and_diff() {
     // Run
-    JavaPairRDD<Long[], Long> result = PrepareData.boudariesDiff(ts);
+    JavaPairRDD<Long[], Long> result = PrepareData.boudariesDiff(times, firstElement, lastElement);
     // Assert
-    assertEquals(18, ts.count());
+    assertEquals(18, times.count());
     assertEquals(17, result.count());
     assertEquals(20000000, (long) result.first()._1[0]);
     assertEquals(10000000, (long) result.first()._1[1]);
@@ -51,7 +57,7 @@ public class PrepareDataTest {
 
   @Test public void define_jump() {
     // Init
-    JavaPairRDD<Long[], Long> boundariesDiff = PrepareData.boudariesDiff(ts);
+    JavaPairRDD<Long[], Long> boundariesDiff = PrepareData.boudariesDiff(times, firstElement, lastElement);
     // Run
     JavaPairRDD<Long, Long> result = PrepareData.defineJump(boundariesDiff);
     // Assert
@@ -73,10 +79,7 @@ public class PrepareDataTest {
 
   @Test public void define_interval() {
     // Init
-    Long firstElement = ts.first();
-    Long lastElement = ts.sortBy(t -> t, false, 1).first();
-
-    JavaPairRDD<Long[], Long> boundariesDiff = PrepareData.boudariesDiff(ts);
+    JavaPairRDD<Long[], Long> boundariesDiff = PrepareData.boudariesDiff(times, firstElement, lastElement);
 
     JavaPairRDD<Long, Long> jump = PrepareData.defineJump(boundariesDiff);
     // Run

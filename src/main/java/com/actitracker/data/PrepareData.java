@@ -3,32 +3,29 @@ package com.actitracker.data;
 
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.JavaSparkContext;
 import scala.Tuple2;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.function.Predicate;
 
 public class PrepareData {
 
-  public static JavaPairRDD<Long[], Long> boudariesDiff(JavaRDD<Long> timestamps) {
-
-    Long firstElement = timestamps.first();
-    Long lastElement = timestamps.sortBy(time -> time, false, 1).first();
+  /**
+   * identify Jump
+   */
+  public static JavaPairRDD<Long[], Long> boudariesDiff(JavaRDD<Long> timestamps, Long firstElement, Long lastElement) {
 
     JavaRDD<Long> firstRDD = timestamps.filter(record -> record > firstElement);
     JavaRDD<Long> secondRDD = timestamps.filter(record -> record < lastElement);
 
     // define periods of recording
-    JavaPairRDD<Long[], Long> tsBoundaries = firstRDD.zip(secondRDD)
-                                                     .mapToPair(pair -> new Tuple2<>(new Long[]{pair._1, pair._2}, pair._1 - pair._2));
-
-    return tsBoundaries;
+    return firstRDD.zip(secondRDD)
+                   .mapToPair(pair -> new Tuple2<>(new Long[]{pair._1, pair._2}, pair._1 - pair._2));
   }
 
   public static JavaPairRDD<Long, Long> defineJump(JavaPairRDD<Long[], Long> tsBoundaries) {
+
     return tsBoundaries.filter(pair -> pair._2 > 100000000)
                        .mapToPair(pair -> new Tuple2<>(pair._1[1], pair._1[0]));
   }
@@ -52,8 +49,6 @@ public class PrepareData {
 
     // end limite
     results.add(new Long[]{flatten.get(size - 1), lastElement, (long) Math.round((lastElement - flatten.get(size - 1)) / windows)});
-
-    results.removeIf(longs -> 0 == longs[2]);
 
     return results;
   }
