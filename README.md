@@ -30,9 +30,14 @@ More about on this [post]().
 I have pushed the data into Cassandra and then used the [connector Spark-Cassandra](https://github.com/datastax/spark-cassandra-connector).
 
 To create a table and push your data:
-<script src="https://gist.github.com/nivdul/88d1dbb944f75c8bf612.js"></script>
+```sql
+CREATE KEYSPACE actitracker WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1 };
+CREATE TABLE users (user_id int,activity text,timestamp bigint,acc_x double,acc_y double,acc_z double, PRIMARY KEY ((user_id,activity),timestamp));
+COPY users FROM '/path_to_your_data/data.csv' WITH HEADER = true;
+SELECT * FROM users WHERE user_id = 8 AND activity = 'Standing' ORDER BY timestamp asc LIMIT 10;
+```
 
 ###Data
 
-The data as a cvs file are available in the directory '/data/data.csv.zip'.
-You can also find the features in the zip '/data/features-actitracker.zip'.
+The data as a cvs file are available in the directory ```/data/data.csv.zip```.
+You can also find the features in the zip ```/data/features-actitracker.zip```.
