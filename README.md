@@ -16,13 +16,13 @@ The plots below show characteristics for each activity. Because of the periodici
 
 
 <div>
-	<a href="/img/walking_jogging_view" ><img src="/img/grouped_images.jpg" ></a>
+	<a href="/img/walking_jogging_view.png" ><img src="/img/grouped_images.png" ></a>
 </div>
 <div>
-	<a href="/img/standing_sitting_view" ><img src="/img/standing_sitting_view" ></a>
+	<a href="/img/standing_sitting_view.png" ><img src="/img/standing_sitting_view.png" ></a>
 </div>
 <div>
-	<a href="/img/stairs_view" ><img src="/img/stairs_view" ></a>
+	<a href="/img/stairs_view.png" ><img src="/img/stairs_view.png" ></a>
 </div>
 
 
