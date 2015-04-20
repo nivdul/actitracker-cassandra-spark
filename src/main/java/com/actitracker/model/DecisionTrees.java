@@ -23,7 +23,7 @@ public class DecisionTrees {
   public Double createModel() {
     // parameters
     Map<Integer, Integer> categoricalFeaturesInfo = new HashMap<>();
-    int numClasses = 4;
+    int numClasses = 6;
     String impurity = "gini";
     int maxDepth = 9;
     int maxBins = 32;

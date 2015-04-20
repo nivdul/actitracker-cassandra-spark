@@ -24,7 +24,6 @@ import org.apache.spark.mllib.stat.Statistics;
  * - Average resultant acceleration: 1/n * ∑ √(x² + y² + z²)
  * - Average time between peaks (max) (for each axis)
  *
- * More about the a study: http://www.cis.fordham.edu/wisdm/includes/files/sensorKDD-2010.pdf
  */
 public class ExtractFeature {
 
@@ -35,25 +34,25 @@ public class ExtractFeature {
   }
 
   /**
-   * @return Vector (mean_acc_x, mean_acc_y, mean_acc_z)
+   * @return array (mean_acc_x, mean_acc_y, mean_acc_z)
    */
   public double[] computeAvgAcc() {
     return this.summary.mean().toArray();
   }
 
   /**
-   * @return Vector (var_acc_x, var_acc_y, var_acc_z)
+   * @return array (var_acc_x, var_acc_y, var_acc_z)
    */
   public double[] computeVariance() {
     return this.summary.variance().toArray();
   }
 
   /**
-   * @return Vector [ (1 / n ) * ∑ |b - mean_b|, for b in {x,y,z} ]
+   * @return array [ (1 / n ) * ∑ |b - mean_b|, for b in {x,y,z} ]
    */
   public static double[] computeAvgAbsDifference(JavaRDD<double[]> data, double[] mean) {
 
-    // then for each point x compute x - mean
+    // for each point x compute x - mean
     // then apply an absolute value: |x - mean|
     JavaRDD<Vector> abs = data.map(record -> new double[]{Math.abs(record[0] - mean[0]),
                                                           Math.abs(record[1] - mean[1]),
@@ -82,6 +81,9 @@ public class ExtractFeature {
 
   }
 
+  /**
+   * compute average time between peaks.
+   */
   public Double computeAvgTimeBetweenPeak(JavaRDD<long[]> data) {
     // define the maximum
     double[] max = this.summary.max().toArray();

@@ -27,10 +27,10 @@ public class RandomForests {
     // parameters
     Map<Integer, Integer> categoricalFeaturesInfo = new HashMap<Integer, Integer>();
     int numTrees = 10;
-    int numClasses = 4;
+    int numClasses = 6;
     String featureSubsetStrategy = "auto";
     String impurity = "gini";
-    int maxDepth = 4;
+    int maxDepth = 9;
     int maxBins = 32;
 
     // create model

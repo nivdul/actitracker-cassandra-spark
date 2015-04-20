@@ -47,7 +47,7 @@ public class PrepareData {
       results.add(new Long[]{flatten.get(i), flatten.get(i + 1), (long) Math.round((flatten.get(i + 1) - flatten.get(i)) / windows)});
     }
 
-    // end limite
+    // end condition
     results.add(new Long[]{flatten.get(size - 1), lastElement, (long) Math.round((lastElement - flatten.get(size - 1)) / windows)});
 
     return results;

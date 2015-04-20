@@ -5,6 +5,7 @@ import com.actitracker.data.DataManager;
 import com.actitracker.data.ExtractFeature;
 import com.actitracker.data.PrepareData;
 import com.actitracker.model.DecisionTrees;
+import com.actitracker.model.RandomForests;
 import com.datastax.spark.connector.japi.CassandraRow;
 import com.datastax.spark.connector.japi.rdd.CassandraJavaRDD;
 import org.apache.spark.SparkConf;
@@ -23,7 +24,7 @@ import static java.util.Arrays.*;
 
 public class RecognizeActivity {
 
-  private static List<String> ACTIVITIES = asList("Standing", "Jogging", "Walking", "Sitting");
+  private static List<String> ACTIVITIES = asList("Standing", "Jogging", "Walking", "Sitting", "Upstairs", "Downstairs");
 
   public static void main(String[] args) {
 
@@ -40,12 +41,11 @@ public class RecognizeActivity {
 
     List<LabeledPoint> labeledPoints = new ArrayList<>();
 
-    for (int i = 1; i < 2; i++) {
+    for (int i = 1; i < 38; i++) {
 
       for (String activity: ACTIVITIES) {
 
-        // create bucket of sorted data by ascending timestamp
-        //retrieve all timestamp
+        // create bucket of sorted data by ascending timestamp by (user, activity)
         JavaRDD<Long> times = cassandraRowsRDD.select("timestamp")
                                               .where("user_id=? AND activity=?", i, activity)
                                               .withAscOrder()
@@ -53,29 +53,13 @@ public class RecognizeActivity {
                                               .map(entry -> (long) entry.get("timestamp"))
                                               .cache();
 
-
-
         // if data
         if (100 < times.count()) {
 
           //////////////////////////////////////////////////////////////////////////////
           // PREPARE THE DATA: define the windows for each activity records intervals //
           //////////////////////////////////////////////////////////////////////////////
-
-          // first find jumps to define the continuous periods of data
-          Long firstElement = times.first();
-          Long lastElement = times.sortBy(time -> time, false, 1).first();
-
-          // compute the difference between each timestamp
-          JavaPairRDD<Long[], Long> tsBoundariesDiff = PrepareData.boudariesDiff(times, firstElement, lastElement);
-
-          // define periods of recording
-          // if the difference is greater than 100 000 000, it must be different periods of recording
-          // ({min_boundary, max_boundary}, max_boundary - min_boundary > 100 000 000)
-          JavaPairRDD<Long, Long> jumps = PrepareData.defineJump(tsBoundariesDiff);
-
-          // Now define interval
-          List<Long[]> intervals = PrepareData.defineInterval(jumps, firstElement, lastElement, 5000000000L);
+          List<Long[]> intervals = defineWindows(times);
 
           for (Long[] interval: intervals) {
             for (int j = 0; j < interval[2]; j++) {
@@ -95,10 +79,9 @@ public class RecognizeActivity {
                 ////////////////////////////////////////
                 // extract features from this windows //
                 ////////////////////////////////////////
-
-                // the average acceleration
                 ExtractFeature extractFeature = new ExtractFeature(vectors);
 
+                // the average acceleration
                 double[] mean = extractFeature.computeAvgAcc();
 
                 // the variance
@@ -124,14 +107,11 @@ public class RecognizeActivity {
       }
     }
 
-    ////////////////////////////
-    // ML part with the models //
-    ////////////////////////////
+    // ML part with the models: create model prediction and train data on it //
     if (labeledPoints.size() > 0) {
+
       // data ready to be used to build the model
       JavaRDD<LabeledPoint> data = sc.parallelize(labeledPoints);
-
-      // create model prediction and train data on it
 
       // Split data into 2 sets : training (60%) and test (40%).
       JavaRDD<LabeledPoint>[] splits = data.randomSplit(new double[]{0.6, 0.4});
@@ -142,14 +122,31 @@ public class RecognizeActivity {
       double errDT = new DecisionTrees(trainingData, testData).createModel();
 
       // With Random Forest
-      //double errRF = new RandomForests(trainingData, testData).createModel();
+      double errRF = new RandomForests(trainingData, testData).createModel();
 
-      System.out.println("sample size " + labeledPoints.size());
+      System.out.println("sample size " + data.count());
       System.out.println("Test Error Decision Tree: " + errDT);
-      //System.out.println("Test Error Random Forest: " + errRF);
+      System.out.println("Test Error Random Forest: " + errRF);
 
     }
 
+  }
+
+  private static List<Long[]> defineWindows(JavaRDD<Long> times) {
+    // first find jumps to define the continuous periods of data
+    Long firstElement = times.first();
+    Long lastElement = times.sortBy(time -> time, false, 1).first();
+
+    // compute the difference between each timestamp
+    JavaPairRDD<Long[], Long> tsBoundariesDiff = PrepareData.boudariesDiff(times, firstElement, lastElement);
+
+    // define periods of recording
+    // if the difference is greater than 100 000 000, it must be different periods of recording
+    // ({min_boundary, max_boundary}, max_boundary - min_boundary > 100 000 000)
+    JavaPairRDD<Long, Long> jumps = PrepareData.defineJump(tsBoundariesDiff);
+
+    // Now define the intervals
+    return PrepareData.defineInterval(jumps, firstElement, lastElement, 5000000000L);
   }
 
   /**
@@ -181,6 +178,10 @@ public class RecognizeActivity {
       label = 2;
     } else if ("Sitting".equals(activity)) {
       label = 3;
+    } else if ("Upstairs".equals(activity)) {
+      label = 4;
+    } else if ("Downstairs".equals(activity)) {
+      label = 5;
     }
 
     return new LabeledPoint(label, Vectors.dense(features));
