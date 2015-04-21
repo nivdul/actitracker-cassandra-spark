@@ -28,7 +28,7 @@ The plots below show characteristics for each activity. Because of the periodici
 
 We observe repeating waves and peaks for the following repetitive activities walking, jogging, ascending stairs and descending stairs. The activities Upstairs and Downstairs are very similar, and there is no periodic behavior for more static activities like standing or sitting, but different amplitudes.
 
-More about on this [post]().
+More about on this [post](https://nivdul.wordpress.com/2015/04/20/analyze-accelerometer-data-with-apache-spark-and-mllib/).
 
 ##Launch the project
 
