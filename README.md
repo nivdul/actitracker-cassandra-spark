@@ -14,18 +14,6 @@ The accelerometer measures acceleration in all three spatial dimensions as follo
 
 The plots below show characteristics for each activity. Because of the periodicity of such activities, a few seconds windows is sufficient.
 
-
-<div>
-	<a href="/img/walking_jogging_view.png" ><img src="/img/walking_jogging_view.png" ></a>
-</div>
-<div>
-	<a href="/img/standing_sitting_view.png" ><img src="/img/standing_sitting_view.png" ></a>
-</div>
-<div>
-	<a href="/img/stairs_view.png" ><img src="/img/stairs_view.png" ></a>
-</div>
-
-
 We observe repeating waves and peaks for the following repetitive activities walking, jogging, ascending stairs and descending stairs. The activities Upstairs and Downstairs are very similar, and there is no periodic behavior for more static activities like standing or sitting, but different amplitudes.
 
 More about on this [post](https://nivdul.wordpress.com/2015/04/20/analyze-accelerometer-data-with-apache-spark-and-mllib/).
