@@ -2,6 +2,7 @@ package com.actitracker.model;
 
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.mllib.regression.LabeledPoint;
 import org.apache.spark.mllib.tree.DecisionTree;
 import org.apache.spark.mllib.tree.model.DecisionTreeModel;
@@ -15,12 +16,14 @@ public class DecisionTrees {
   JavaRDD<LabeledPoint> trainingData;
   JavaRDD<LabeledPoint> testData;
 
+
+
   public DecisionTrees(JavaRDD<LabeledPoint> trainingData, JavaRDD<LabeledPoint> testData) {
     this.trainingData = trainingData;
     this.testData = testData;
   }
 
-  public Double createModel() {
+  public Double createModel(JavaSparkContext sc) {
     // parameters
     Map<Integer, Integer> categoricalFeaturesInfo = new HashMap<>();
     int numClasses = 6;
@@ -30,6 +33,8 @@ public class DecisionTrees {
 
     // create model
     final DecisionTreeModel model = DecisionTree.trainClassifier(trainingData, numClasses, categoricalFeaturesInfo, impurity, maxDepth, maxBins);
+
+    model.save(sc.sc(), "actitracker");
 
     // Evaluate model on training instances and compute training error
     JavaPairRDD<Double, Double> predictionAndLabel = testData.mapToPair(p -> new Tuple2<>(model.predict(p.features()), p.label()));

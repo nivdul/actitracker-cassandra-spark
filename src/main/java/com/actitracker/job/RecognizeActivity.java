@@ -37,11 +37,12 @@ public class RecognizeActivity {
     JavaSparkContext sc = new JavaSparkContext(sparkConf);
 
     // retrieve data from Cassandra and create an CassandraRDD
-    CassandraJavaRDD<CassandraRow> cassandraRowsRDD = javaFunctions(sc).cassandraTable("actitracker", "users");
+    //CassandraJavaRDD<CassandraRow> cassandraRowsRDD = javaFunctions(sc).cassandraTable("actitracker", "users");
+    CassandraJavaRDD<CassandraRow> cassandraRowsRDD = javaFunctions(sc).cassandraTable("accelerations", "users");
 
     List<LabeledPoint> labeledPoints = new ArrayList<>();
 
-    for (int i = 1; i < 38; i++) {
+    for (int i = 1; i < 2; i++) {
 
       for (String activity: ACTIVITIES) {
 
@@ -119,7 +120,7 @@ public class RecognizeActivity {
       JavaRDD<LabeledPoint> testData = splits[1];
 
       // With DecisionTree
-      double errDT = new DecisionTrees(trainingData, testData).createModel();
+      double errDT = new DecisionTrees(trainingData, testData).createModel(sc);
 
       // With Random Forest
       double errRF = new RandomForests(trainingData, testData).createModel();
