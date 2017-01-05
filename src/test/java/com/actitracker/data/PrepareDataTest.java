@@ -85,7 +85,7 @@ public class PrepareDataTest {
     // Run
     List<Long[]> result = PrepareData.defineInterval(jump, firstElement, lastElement, 30000000);
     // Assert
-    assertEquals(4, result.size());
+    assertEquals(5, result.size());
 
     assertEquals(10000000, (long) result.get(0)[0]);
     assertEquals(50000000, (long) result.get(0)[1]);
@@ -98,10 +98,14 @@ public class PrepareDataTest {
     assertEquals(300000000, (long) result.get(2)[0]);
     assertEquals(360000000, (long) result.get(2)[1]);
     assertEquals(2, (long) result.get(2)[2]);
-
-    assertEquals(600000000, (long) result.get(3)[0]);
-    assertEquals(640000000, (long) result.get(3)[1]);
-    assertEquals(1, (long) result.get(3)[2]);
+    
+    assertEquals(480000000, (long) result.get(3)[0]);
+    assertEquals(490000000, (long) result.get(3)[1]);
+    assertEquals(0, (long) result.get(3)[2]);
+    
+    assertEquals(600000000, (long) result.get(4)[0]);
+    assertEquals(640000000, (long) result.get(4)[1]);
+    assertEquals(1, (long) result.get(4)[2]);
   }
 
 }
